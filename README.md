@@ -93,6 +93,7 @@ timeline
   Near term : Generic verification adapters (npm, cargo, make) via config file
             : Unit tests for routers and the judge
             : Cost / latency report per node
+            : Pluggable specialist review stage (see below)
   Mid term  : Parallel coders on competing plans, pick by verification score
             : Git-host adapter that opens a draft PR at the human gate
             : Chat approval (Telegram / Slack) instead of CLI
@@ -100,6 +101,17 @@ timeline
             : Domain packs (medical imaging, scientific code) with specialised red-team prompts
             : Multi-repo tasks with a shared plan
 ```
+
+### Specialist code-review stage (planned)
+
+Today the review nest uses general-purpose local models. The plan is to add a **pluggable review node** that delegates to purpose-built reviewers and feeds their findings into the same red-team → judge pipeline:
+
+- **Hybrid reviewers** such as [alibaba/open-code-review](https://github.com/alibaba/open-code-review) (Apache-2.0): deterministic rule pipelines plus an LLM agent, line-level comments and built-in rulesets (null-pointer, thread-safety, XSS, SQL injection). Their findings would run *before* the LLM proposer, so cheap, precise checks come first.
+- **Code-review fine-tuned models** served through Ollama, selected per language or domain, instead of one generic model for every role.
+- **Static analysers** (clang-tidy, ruff, semgrep) wrapped as nodes, so the judge weighs tool output and LLM opinion with the same evidence format.
+- **Ensemble scoring**: several independent reviewers vote; disagreement is what gets escalated to the human gate.
+
+The judge stays deterministic: specialist reviewers add evidence, they never get final authority.
 
 Contributions and ideas are welcome. The graph is deliberately small (≈ 650 lines) so each of these is a node or an edge, not a rewrite.
 
