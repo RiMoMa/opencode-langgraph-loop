@@ -2,7 +2,7 @@
 
 <h1 align="center">opencode-langgraph-loop</h1>
 <p align="center"><b>A local-first, human-gated autonomous coding loop.</b><br>
-LangGraph orchestrates; OpenCode agents write code; deterministic checks decide what is true; a human has the last word.</p>
+LangGraph orchestrates; OpenCode agents write the code; deterministic checks verify the result; a human has the final say.</p>
 
 <p align="center">
 <img alt="license" src="https://img.shields.io/badge/license-GPL--2.0-blue">
@@ -13,26 +13,26 @@ LangGraph orchestrates; OpenCode agents write code; deterministic checks decide 
 
 ## The problem
 
-Letting an LLM agent edit a real repository unattended fails in three predictable ways:
+Leaving an LLM agent to edit a real repository unattended usually fails in three predictable ways:
 
 | Failure | What goes wrong | What this project does |
 |---|---|---|
-| **Self-certification** | The agent that wrote the code also says "it works". | Only a **deterministic** step (build + tests) can declare pass/fail. LLMs are advisory. |
-| **Unbounded blast radius** | `rm -rf`, `git push`, leaked `.env`, `sudo`. | Hard `permission` deny-rules in `opencode.json`, plus an isolated **git worktree** per run. |
-| **Runaway loops & cost** | Retries forever, burns tokens, needs a cloud API. | Bounded iterations (max 3), everything runs on **local models** through Ollama. |
+| **Self-certification** | The agent that wrote the code also claims it works. | Only a **deterministic** step (build + tests) decides pass or fail. LLMs only advise. |
+| **Unbounded blast radius** | Destructive or leaky commands (`rm -rf`, `git push`, leaked `.env`, `sudo`). | Best-effort `permission` deny-rules in `opencode.json`, plus an isolated **git worktree** per run. This is a guardrail, **not a sandbox** (see [Known security limitations](#known-security-limitations)). |
+| **Runaway loops & cost** | Infinite retries, wasted tokens, and reliance on paid cloud APIs. | Capped at 3 iterations, running entirely on **local models** via Ollama. |
 
-The result is a loop you can leave running and still trust: it either produces a verified change set, or it stops and escalates to you.
+The goal is a loop you can leave running: it either produces a verified changeset or stops and escalates to you. See the [known security limitations](#known-security-limitations) before trusting it with anything sensitive.
 
 ## How it works
 
 <p align="center"><img src="docs/flow.svg" alt="LangGraph flow: worktree, planner, coder, post-process, preflight, verification, reviewer, red-team, judge, human gate" width="100%"></p>
 
-1. **Worktree** – the task runs in a fresh `git worktree`, never in your working copy.
-2. **Planner → Coder** – a small model plans; the coder (`opencode run --auto`) edits files.
-3. **Post-process + Preflight** – mechanical clean-up and a cheap LLM triage; obvious problems bounce straight back to the coder and skip the expensive build.
-4. **Verification** – `cmake` + `pytest` (or your own commands). **This is the single source of truth.**
-5. **Deliberative review nest** – a *proposer* raises findings, a *red-team* agent tries to refute them, and a *deterministic judge* aggregates. No single model gets to approve or block.
-6. **Human gate** – `interrupt()` pauses the graph (state persisted in SQLite). You `approve` or `reject`; if the loop exhausted its 3 iterations it escalates instead of pretending.
+1. **Worktree** – Each task runs in a fresh `git worktree`, leaving your working copy untouched.
+2. **Planner → Coder** – A small model drafts a plan; the coder (`opencode run --auto`) edits the files.
+3. **Post-process + Preflight** – Mechanical cleanup followed by a fast LLM triage. Obvious mistakes bounce straight back to the coder before running an expensive build.
+4. **Verification** – Runs `cmake` + `pytest` (or your custom commands). **This is the single source of truth.**
+5. **Adversarial review** – A *proposer* flags potential issues, a *red-team* agent tries to disprove them, and a *deterministic judge* aggregates the surviving findings. No single model can approve or block a change on its own.
+6. **Human gate** – `interrupt()` pauses execution (with state saved in SQLite) until you `approve` or `reject`. If the loop hits its 3-iteration limit, it escalates to you instead of guessing.
 
 ```mermaid
 flowchart LR
@@ -51,17 +51,17 @@ flowchart LR
 
 | Layer | Who | Authority |
 |---|---|---|
-| Opinion | planner, coder, proposer, red-team (LLMs) | none – they suggest |
-| Truth | build, tests, judge (code) | decides pass / fail |
-| Decision | you | final merge |
+| Opinion | planner, coder, proposer, red-team (LLMs) | None – advisory only |
+| Truth | build, tests, judge (code) | Decides pass / fail |
+| Decision | you | Final merge |
 
-## What it lets you integrate
+## What you can integrate
 
-- **Any repo with a build/test command** – swap `CMAKE_FLAGS` and the pytest path in `graph/workflow.py`. It was developed against a C++/Qt6 codebase ([ASAP](https://github.com/RiMoMa/ASAP)) with Python scripts.
-- **Any OpenAI-compatible endpoint** – models are declared in `opencode.json`; per-role overrides with `GRAPH_MODEL_PROGRAMADOR`, `GRAPH_MODEL_REVISOR`, `GRAPH_MODEL_REVISOR_REDTEAM`, `GRAPH_MODEL_PLANNER`, `GRAPH_MODEL_PREFLIGHT`.
-- **LangGraph Studio / API** – `langgraph dev` exposes the compiled graph (`graph/workflow.py:graph`), with partial input (`{"task": "..."}`), streaming and resumable threads.
-- **Your own approval channel** – the gate is a plain `interrupt()`; resume it from the CLI, Studio, or any client that can call the LangGraph API.
-- **CI / schedulers** – `python graph/run.py "<task>"` is a plain process; checkpoints in SQLite make it restartable.
+- **Any repo with a build/test command** – Update `CMAKE_FLAGS` and the pytest path in `graph/workflow.py`. Built and tested against a C++/Qt6 codebase ([ASAP](https://github.com/RiMoMa/ASAP)) with Python scripts.
+- **Any OpenAI-compatible endpoint** – Declare models in `opencode.json` and override individual roles via `GRAPH_MODEL_PROGRAMADOR`, `GRAPH_MODEL_REVISOR`, `GRAPH_MODEL_REVISOR_REDTEAM`, `GRAPH_MODEL_PLANNER`, and `GRAPH_MODEL_PREFLIGHT`.
+- **LangGraph Studio / API** – `langgraph dev` serves the compiled graph (`graph/workflow.py:graph`) with partial input (`{"task": "..."}`), streaming, and resumable threads.
+- **Custom approval channels** – Because the human gate is a standard LangGraph `interrupt()`, you can resume runs from the CLI, Studio, or any client calling the LangGraph API.
+- **CI & schedulers** – `python graph/run.py "<task>"` runs as a standard process, and SQLite checkpoints make interrupted runs easy to resume.
 
 ## Quick start
 
@@ -75,15 +75,28 @@ python graph/run.py --resume <thread>           # continue a paused run
 
 | Variable | Purpose | Default |
 |---|---|---|
-| `GRAPH_PYTHON` | interpreter used for `pytest` | current `python` |
+| `GRAPH_PYTHON` | Python interpreter used for `pytest` | current `python` |
 | `GRAPH_DB` | SQLite checkpoint file, or `:memory:` | `./checkpoints.db` |
-| `GRAPH_MODEL_*` | per-role model id | `local-ollama/gemma4-26b-64k` |
+| `GRAPH_MODEL_*` | Per-role model ID override | `local-ollama/gemma4-26b-64k` |
 
-Run it from the root of the **target repository**. Adapt verification by editing `CMAKE_FLAGS` and the test path in `graph/workflow.py`.
+Run commands from the root of your **target repository**. To use your own build and test steps, edit `CMAKE_FLAGS` and the test path in `graph/workflow.py`.
 
-## Safety rails (`opencode.json`)
+## Safety rails (`opencode.json`, best-effort)
 
-Denied for every agent: `sudo`, `git push`, `git reset --hard`, `git clean`, `git filter-*`, `git branch -D`, `gh repo`/`gh pr create`/`gh release`, `curl|sh`, `rm -rf /` and `~`, `mkfs`, `dd`, `shred`, reading `*.env` and `*.ssh*`, interactive questions and directories outside the worktree.
+Every agent is blocked from running or accessing: `sudo`, `git push`, `git reset --hard`, `git clean`, `git filter-*`, `git branch -D`, `gh repo`/`gh pr create`/`gh release`, `curl|sh`, `rm -rf /` and `~`, `mkfs`, `dd`, `shred`, reading `*.env` and `*.ssh*`, interactive prompts, and directories outside the worktree.
+
+## Known security limitations
+
+Reviewed on 2026-11-23. None of these issues are fixed yet; they are documented here so they can be addressed before running this loop on untrusted code. Treat the current rules as guardrails against accidental mistakes, not protection against a malicious repository or prompt injection.
+
+| # | Limitation | Why it matters | Planned fix |
+|---|---|---|---|
+| 1 | **Deny-list can be bypassed.** `bash` is set to `"*": "allow"` with a blocklist, so equivalent commands can slip through (`git -C . push`, `bash -c "..."`, `rm -r -f`, file-deleting scripts, or obfuscated paths like `.s""sh`). | Stops common accidents, not a confused or compromised agent. | Switch to `"*": "deny"` with an explicit allow-list (`git status/diff/add/commit`, build/test commands, and read-only tools). |
+| 2 | **No network isolation.** Only `curl \| sh`-style pipe patterns are blocked; commands like `curl -d @file https://...` are still allowed. | A prompt injection hidden in the target repo could exfiltrate files. | Run agents without network access (`unshare -n`, `bwrap --unshare-net`, or a container), exposing only `localhost:11434` for Ollama. |
+| 3 | **Full environment inheritance.** Both `agent.py` and the `pytest` step pass `os.environ` directly to child processes. | Secrets in your shell (such as `GITHUB_TOKEN` or cloud API keys) are readable by the agent. | Pass a minimal environment (`PATH`, a temporary `HOME`, and `PWD`). |
+| 4 | **`--auto` approves anything not explicitly denied**, and directory containment relies on OpenCode enforcing `external_directory: deny` (which has not been tested against raw shell commands). | Any gap in the deny-list is automatically approved. | Add an integration test that attempts to escape the worktree and fails the build if it succeeds. |
+
+Until these are resolved: only run the loop on repositories you trust, use a disposable checkout, and keep sensitive credentials out of the shell environment.
 
 ## Roadmap & extension ideas
 
@@ -104,30 +117,30 @@ timeline
 
 ### Specialist code-review stage (planned)
 
-Today the review nest uses general-purpose local models. The plan is to add a **pluggable review node** that delegates to purpose-built reviewers and feeds their findings into the same red-team → judge pipeline:
+Currently, the review step relies on general-purpose local models. We plan to add a **pluggable review node** that runs specialized reviewers and feeds their findings into the existing red-team → judge pipeline:
 
-- **Hybrid reviewers** such as [alibaba/open-code-review](https://github.com/alibaba/open-code-review) (Apache-2.0): deterministic rule pipelines plus an LLM agent, line-level comments and built-in rulesets (null-pointer, thread-safety, XSS, SQL injection). Their findings would run *before* the LLM proposer, so cheap, precise checks come first.
-- **Code-review fine-tuned models** served through Ollama, selected per language or domain, instead of one generic model for every role.
-- **Static analysers** (clang-tidy, ruff, semgrep) wrapped as nodes, so the judge weighs tool output and LLM opinion with the same evidence format.
-- **Ensemble scoring**: several independent reviewers vote; disagreement is what gets escalated to the human gate.
+- **Hybrid reviewers** like [alibaba/open-code-review](https://github.com/alibaba/open-code-review) (Apache-2.0): combines deterministic rule pipelines with an LLM agent, line-level comments, and built-in rulesets (null-pointer, thread-safety, XSS, SQL injection). Running these *before* the LLM proposer catches straightforward issues early and cheaply.
+- **Fine-tuned code-review models** served via Ollama and selected by language or domain, replacing the single generic model across all roles.
+- **Static analyzers** (`clang-tidy`, `ruff`, `semgrep`) wrapped as graph nodes so the judge can weigh linter output alongside LLM findings using a unified evidence format.
+- **Ensemble scoring**: multiple independent reviewers vote, escalating to the human gate whenever they disagree.
 
-The judge stays deterministic: specialist reviewers add evidence, they never get final authority.
+Throughout all of this, the judge remains deterministic: specialist reviewers contribute evidence, never final approval.
 
-Contributions and ideas are welcome. The graph is deliberately small (≈ 650 lines) so each of these is a node or an edge, not a rewrite.
+Contributions and ideas are welcome. The core graph is intentionally compact (~650 lines), so adding features means wiring in a new node or edge rather than rewriting the framework.
 
 ## Proven on a real codebase
 
-The loop was built while developing the [ASAP](https://github.com/RiMoMa/ASAP) fork (a C++/Qt6 digital-pathology viewer with Python tooling). Work on that fork under this workflow includes:
+This loop was built while developing a fork of [ASAP](https://github.com/RiMoMa/ASAP) (a C++/Qt6 digital pathology viewer with Python tooling). Work on that fork under this workflow includes:
 
-- **`DetectionToolBase`** extracted from the Gland and U-Net detection tools, and **non-blocking detection** (the GUI no longer freezes while a model runs).
-- **`detect_common.py`**: the duplicated FOV scripts merged into one module.
-- **`DetectionConfigDialog`** for configuring the detection models, plus a configurable `downscale`.
-- **Qt6 fixes**: LUT connections via `QOverload`, LUT metatype registration, Fusion style and dark-palette detection, and a global QSS stylesheet.
-- **Tests and build**: unit tests for `xml_utils` and OpenSlide header discovery in CMake.
+- **`DetectionToolBase`**: extracted shared logic from the Gland and U-Net detection tools and added **non-blocking detection** so the GUI stays responsive during model inference.
+- **`detect_common.py`**: consolidated duplicate FOV scripts into a single shared module.
+- **`DetectionConfigDialog`**: added a configuration dialog for detection models with an adjustable `downscale` parameter.
+- **Qt6 fixes**: updated LUT signal connections via `QOverload`, added LUT metatype registration, improved Fusion style and dark-palette detection, and applied a global QSS stylesheet.
+- **Tests and build**: added unit tests for `xml_utils` and fixed OpenSlide header discovery in CMake.
 
 ## Status
 
-Experimental. The graph itself has no automated tests yet. Prompts are written in Spanish; they are plain strings in `graph/workflow.py`, work with the multilingual local models used here, and can be edited or translated freely.
+Experimental. The graph itself does not have automated unit tests yet. Built-in prompts are currently written in Spanish as plain strings in `graph/workflow.py`; they work out of the box with the configured multilingual local models and can be freely edited or translated.
 
 ## License
 
