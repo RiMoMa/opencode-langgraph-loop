@@ -30,7 +30,7 @@
 <text class="lg" x="640" y="16">preflight fails → back to coder</text>
 <!-- END -->
 <path class="e" d="M105 294V370"/>
-<g><rect x="45" y="372" width="120" height="44" rx="22" fill="none" stroke="var(--ok)" stroke-width="2"/><text class="t" x="105" y="400" style="fill:var(--ok)">merge / END</text></g>
+<g><rect x="45" y="372" width="120" height="44" rx="22" fill="none" stroke="var(--ok)" stroke-width="2"/><text class="t" x="105" y="400" style="fill:var(--ok)">verdict / END</text></g>
 <!-- legend -->
 <g transform="translate(300,360)">
 <rect x="0" y="0" width="16" height="16" rx="4" class="n a"/><text class="lg" x="24" y="13">LLM agent (advisory, no authority)</text>
