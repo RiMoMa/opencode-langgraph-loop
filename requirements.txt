@@ -1,0 +1,6 @@
+langgraph
+langgraph-cli[inmem]
+langgraph-checkpoint-sqlite
+pydantic
+typing_extensions
+pytest

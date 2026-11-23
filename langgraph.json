@@ -1,0 +1,7 @@
+{
+  "python_version": "3.11",
+  "dependencies": ["langgraph"],
+  "graphs": {
+    "asap": "./graph/workflow.py:graph"
+  }
+}
