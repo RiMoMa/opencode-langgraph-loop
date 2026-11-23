@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 520" font-family="Inter,Segoe UI,Helvetica,Arial,sans-serif">
+<style>
+:root{--bg:#0b1220;--card:#121c33;--line:#3b4a6b;--txt:#e6edf7;--mut:#8fa1c0;--agent:#38bdf8;--det:#f59e0b;--human:#a78bfa;--ok:#34d399}
+@media (prefers-color-scheme: light){:root{--bg:#ffffff;--card:#f1f5fb;--line:#9fb0cc;--txt:#0f172a;--mut:#52627f;--agent:#0284c7;--det:#d97706;--human:#7c3aed;--ok:#059669}}
+.bg{fill:var(--bg)} .n{fill:var(--card);stroke-width:2} .a{stroke:var(--agent)} .d{stroke:var(--det)} .h{stroke:var(--human)}
+.t{fill:var(--txt);font-size:15px;font-weight:600;text-anchor:middle} .s{fill:var(--mut);font-size:11.5px;text-anchor:middle}
+.e{stroke:var(--line);stroke-width:2;fill:none;marker-end:url(#ar)} .loop{stroke:var(--det);stroke-dasharray:6 5}
+.lg{fill:var(--mut);font-size:12px}
+</style>
+<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6b7fa6"/></marker></defs>
+<rect class="bg" width="1200" height="520" rx="14"/>
+<!-- row 1 -->
+<g><rect class="n d" x="30" y="60" width="150" height="64" rx="12"/><text class="t" x="105" y="88">worktree</text><text class="s" x="105" y="108">isolated git worktree</text></g>
+<g><rect class="n a" x="230" y="60" width="150" height="64" rx="12"/><text class="t" x="305" y="88">planner</text><text class="s" x="305" y="108">LLM · step plan</text></g>
+<g><rect class="n a" x="430" y="60" width="150" height="64" rx="12"/><text class="t" x="505" y="88">coder</text><text class="s" x="505" y="108">opencode run --auto</text></g>
+<g><rect class="n d" x="630" y="60" width="150" height="64" rx="12"/><text class="t" x="705" y="88">post-process</text><text class="s" x="705" y="108">format · whitespace</text></g>
+<g><rect class="n a" x="830" y="60" width="150" height="64" rx="12"/><text class="t" x="905" y="88">preflight</text><text class="s" x="905" y="108">LLM · fast triage</text></g>
+<path class="e" d="M180 92H228"/><path class="e" d="M380 92H428"/><path class="e" d="M580 92H628"/><path class="e" d="M780 92H828"/>
+<!-- row 2 -->
+<g><rect class="n d" x="830" y="230" width="150" height="64" rx="12"/><text class="t" x="905" y="258">verification</text><text class="s" x="905" y="278">build + tests · truth</text></g>
+<g><rect class="n a" x="630" y="230" width="150" height="64" rx="12"/><text class="t" x="705" y="258">reviewer</text><text class="s" x="705" y="278">proposer</text></g>
+<g><rect class="n a" x="430" y="230" width="150" height="64" rx="12"/><text class="t" x="505" y="258">red-team</text><text class="s" x="505" y="278">challenges findings</text></g>
+<g><rect class="n d" x="230" y="230" width="150" height="64" rx="12"/><text class="t" x="305" y="258">judge</text><text class="s" x="305" y="278">aggregates · deterministic</text></g>
+<g><rect class="n h" x="30" y="230" width="150" height="64" rx="12"/><text class="t" x="105" y="258">human gate</text><text class="s" x="105" y="278">interrupt() · approve/reject</text></g>
+<path class="e" d="M905 124V228"/><path class="e" d="M830 262H782"/><path class="e" d="M630 262H582"/><path class="e" d="M430 262H382"/><path class="e" d="M230 262H182"/>
+<!-- loops -->
+<path class="e loop" d="M305 230V150Q305 140 330 140H480Q505 140 505 126"/>
+<text class="lg" x="318" y="176">judge rejects → another iteration</text>
+<path class="e loop" d="M905 60V30Q905 22 880 22H520Q505 22 505 58"/>
+<text class="lg" x="640" y="16">preflight fails → back to coder</text>
+<!-- END -->
+<path class="e" d="M105 294V370"/>
+<g><rect x="45" y="372" width="120" height="44" rx="22" fill="none" stroke="var(--ok)" stroke-width="2"/><text class="t" x="105" y="400" style="fill:var(--ok)">merge / END</text></g>
+<!-- legend -->
+<g transform="translate(300,360)">
+<rect x="0" y="0" width="16" height="16" rx="4" class="n a"/><text class="lg" x="24" y="13">LLM agent (advisory, no authority)</text>
+<rect x="0" y="28" width="16" height="16" rx="4" class="n d"/><text class="lg" x="24" y="41">deterministic step (authority)</text>
+<rect x="0" y="56" width="16" height="16" rx="4" class="n h"/><text class="lg" x="24" y="69">human (final say)</text>
+</g>
+<text class="lg" x="640" y="400">Guardrails: opencode.json <tspan font-weight="700">permission</tspan> rules (no sudo, push, rm -rf, .env, .ssh…)</text>
+<text class="lg" x="640" y="422">SQLite checkpoints · resumable by thread_id · 100 % local models (Ollama)</text>
+</svg>
