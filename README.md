@@ -103,9 +103,19 @@ timeline
 
 Contributions and ideas are welcome. The graph is deliberately small (≈ 650 lines) so each of these is a node or an edge, not a rewrite.
 
+## Proven on a real codebase
+
+The loop was built while developing the [ASAP](https://github.com/RiMoMa/ASAP) fork (a C++/Qt6 digital-pathology viewer with Python tooling). Work on that fork under this workflow includes:
+
+- **`DetectionToolBase`** extracted from the Gland and U-Net detection tools, and **non-blocking detection** (the GUI no longer freezes while a model runs).
+- **`detect_common.py`**: the duplicated FOV scripts merged into one module.
+- **`DetectionConfigDialog`** for configuring the detection models, plus a configurable `downscale`.
+- **Qt6 fixes**: LUT connections via `QOverload`, LUT metatype registration, Fusion style and dark-palette detection, and a global QSS stylesheet.
+- **Tests and build**: unit tests for `xml_utils` and OpenSlide header discovery in CMake.
+
 ## Status
 
-Experimental. Developed and exercised on one real project; there are no automated tests for the graph itself yet. Strings inside the agent prompts are in Spanish.
+Experimental. The graph itself has no automated tests yet. Prompts are written in Spanish; they are plain strings in `graph/workflow.py`, work with the multilingual local models used here, and can be edited or translated freely.
 
 ## License
 
