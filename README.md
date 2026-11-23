@@ -32,7 +32,7 @@ The goal is a loop you can leave running: it either produces a verified changese
 3. **Post-process + Preflight** – Mechanical cleanup followed by a fast LLM triage. Obvious mistakes bounce straight back to the coder before running an expensive build.
 4. **Verification** – Runs `cmake` + `pytest` (or your custom commands). **This is the single source of truth.**
 5. **Adversarial review** – A *proposer* flags potential issues, a *red-team* agent tries to disprove them, and a *deterministic judge* aggregates the surviving findings. No single model can approve or block a change on its own.
-6. **Human gate** – `interrupt()` pauses execution (with state saved in SQLite) until you `approve` or `reject`. The verdict is recorded and the run ends. Approving leaves the change on its branch in the worktree for you to merge; rejecting does not restart the loop, so you give it a **new prompt** and start a fresh run. If the loop hits its 3-iteration limit, it escalates to you instead of guessing.
+6. **Human gate** – `interrupt()` pauses execution (with state saved in SQLite) until you `approve` or `reject`. The verdict is recorded and the run ends. Approving leaves the change on its branch in the worktree for you to merge; rejecting does not restart the loop. Instead, you use the error or the rejection to sharpen the **requirements and specification** (acceptance criteria, constraints, expected behaviour, files in scope) and start a fresh run with them. In practice, better specs improve the result far more than re-prompting does; `--spec` carries that context into the run. If the loop hits its 3-iteration limit, it escalates to you instead of guessing.
 
 ```mermaid
 flowchart LR
@@ -45,7 +45,7 @@ flowchart LR
   E -- accept / budget spent --> F((Human gate))
   F -- approve --> G[Verdict: approved<br/>branch kept in worktree]
   F -- reject --> H[Verdict: rejected<br/>run ends]
-  H -. you write a new prompt .-> A
+  H -. you refine the requirements / spec .-> A
 ```
 
 ### Trust model
