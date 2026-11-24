@@ -8,7 +8,7 @@ LangGraph orchestrates; OpenCode agents write the code; deterministic checks ver
 <img alt="license" src="https://img.shields.io/badge/license-GPL--2.0-blue">
 <img alt="python" src="https://img.shields.io/badge/python-3.11-3776ab">
 <img alt="runtime" src="https://img.shields.io/badge/LLMs-100%25%20local%20(Ollama)-34d399">
-<img alt="status" src="https://img.shields.io/badge/status-experimental-f59e0b">
+<img alt="status" src="https://img.shields.io/badge/status-beta-f59e0b">
 </p>
 
 ## The problem
@@ -141,7 +141,12 @@ This loop was built while developing a fork of [ASAP](https://github.com/RiMoMa/
 
 ## Status
 
-Experimental. The graph itself does not have automated unit tests yet. Built-in prompts are currently written in Spanish as plain strings in `graph/workflow.py`; they work out of the box with the configured multilingual local models and can be freely edited or translated.
+**Beta.** The loop runs end to end and has been used for real development on ASAP. Open work before a 1.0:
+
+- Automated tests for the graph (routers, judge, verification parsing).
+- Closing the [known security limitations](#known-security-limitations).
+
+You launch it from a shell with a task (and optionally a spec); everything after that flows through the LangGraph pipeline.
 
 ## License
 
